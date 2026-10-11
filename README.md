@@ -187,3 +187,12 @@ MarkdownPad.exe --diag           # 打开诊断日志
   2 秒计时器单独负责。
 - **失败可见**：渲染异常写入 `preview.renderFailed` + 异常摘要，既进状态栏也进预览消息的 `status` 字段，
   由预览页顶部的 `#status` 元素展示（可复制）。
+  ## Star History
+
+<a href="https://www.star-history.com/?repos=8888888b%2Fmarkdown-pad&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=8888888b/markdown-pad&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=8888888b/markdown-pad&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=8888888b/markdown-pad&type=date&legend=top-left" />
+ </picture>
+</a>
