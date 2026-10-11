@@ -1,0 +1,290 @@
+/* Markdown Pad preview theme. Both themes are expressed with CSS variables,
+   so switching theme only swaps the [data-theme] attribute on <html>. */
+
+:root {
+    --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Cascadia Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+    --content-width: 860px;
+    --radius: 6px;
+}
+
+[data-theme="light"] {
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --fg-muted: #59636e;
+    --link: #0969da;
+    --border: #d1d9e0;
+    --border-soft: #e4e8ec;
+    --surface: #f6f8fa;
+    --surface-2: #eef1f4;
+    --quote-bar: #d1d9e0;
+    --accent: #0969da;
+    --mark: #fff8c5;
+    --sel: #dbeafe;
+    --code-bg: #f6f8fa;
+    --tok-keyword: #cf222e;
+    --tok-string: #0a3069;
+    --tok-comment: #6e7781;
+    --tok-number: #0550ae;
+    --tok-type: #953800;
+}
+
+[data-theme="dark"] {
+    --bg: #1b1f23;
+    --fg: #e6edf3;
+    --fg-muted: #9198a1;
+    --link: #6cb6ff;
+    --border: #3d444d;
+    --border-soft: #2f353b;
+    --surface: #22272e;
+    --surface-2: #2b3138;
+    --quote-bar: #3d444d;
+    --accent: #6cb6ff;
+    --mark: #4a3f00;
+    --sel: #274b6d;
+    --code-bg: #16191d;
+    --tok-keyword: #ff7b72;
+    --tok-string: #a5d6ff;
+    --tok-comment: #8b949e;
+    --tok-number: #79c0ff;
+    --tok-type: #ffa657;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+body {
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.65;
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    -webkit-font-smoothing: antialiased;
+}
+
+body::-webkit-scrollbar { width: 10px; height: 10px; }
+body::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 5px;
+    border: 3px solid var(--bg);
+}
+body::-webkit-scrollbar-thumb:hover { background: var(--fg-muted); }
+body::-webkit-scrollbar-track { background: transparent; }
+
+#page {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 28px 32px 64px 32px;
+    overflow-wrap: break-word;
+}
+
+#content > *:first-child { margin-top: 0; }
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 1.6em 0 0.6em 0;
+    scroll-margin-top: 12px;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border-soft); }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border-soft); }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1.05em; }
+h5 { font-size: 0.95em; }
+h6 { font-size: 0.9em; color: var(--fg-muted); }
+
+p { margin: 0 0 1em 0; }
+
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+strong { font-weight: 600; }
+del { color: var(--fg-muted); }
+mark { background: var(--mark); color: inherit; padding: 0 2px; border-radius: 3px; }
+small { color: var(--fg-muted); }
+sub, sup { font-size: 0.75em; }
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 1.8em 0;
+}
+
+ul, ol { margin: 0 0 1em 0; padding-left: 1.8em; }
+li { margin: 0.25em 0; }
+li > p { margin-bottom: 0.4em; }
+li.task-list-item { list-style: none; margin-left: -1.35em; }
+li.task-list-item input[type="checkbox"] {
+    margin-right: 0.5em;
+    vertical-align: middle;
+    accent-color: var(--accent);
+}
+
+blockquote {
+    margin: 0 0 1em 0;
+    padding: 0.2em 1em;
+    color: var(--fg-muted);
+    border-left: 4px solid var(--quote-bar);
+    background: var(--surface);
+    border-radius: 0 var(--radius) var(--radius) 0;
+}
+blockquote > *:last-child { margin-bottom: 0.2em; }
+
+code, kbd, samp {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+}
+
+:not(pre) > code {
+    background: var(--surface-2);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    border: 1px solid var(--border-soft);
+    white-space: break-spaces;
+}
+
+pre {
+    margin: 0 0 1.2em 0;
+    background: var(--code-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    overflow: auto;
+    font-size: 13px;
+    line-height: 1.55;
+}
+pre code {
+    display: block;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    white-space: pre;
+    tab-size: 4;
+}
+pre::-webkit-scrollbar { height: 10px; }
+pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+
+.code-block { position: relative; }
+.code-block .code-lang {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    opacity: 0.85;
+    pointer-events: none;
+}
+.code-block.with-gutter pre code { padding-left: 12px; }
+.code-block .gutter {
+    display: block;
+    float: left;
+    padding: 14px 8px 14px 12px;
+    text-align: right;
+    color: var(--fg-muted);
+    opacity: 0.7;
+    user-select: none;
+    border-right: 1px solid var(--border-soft);
+    margin-right: 12px;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 0 0 1.2em 0;
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow: auto;
+}
+th, td {
+    border: 1px solid var(--border);
+    padding: 6px 13px;
+    text-align: left;
+}
+th { background: var(--surface); font-weight: 600; }
+tbody tr:nth-child(2n) { background: var(--surface); }
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+}
+
+kbd {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.8em;
+}
+
+abbr[title] { text-decoration: underline dotted; cursor: help; }
+
+.footnotes {
+    margin-top: 3em;
+    padding-top: 1em;
+    border-top: 1px solid var(--border);
+    font-size: 0.9em;
+    color: var(--fg-muted);
+}
+.footnotes ol { padding-left: 1.4em; }
+.footnotes li { margin: 0.3em 0; }
+
+.math-inline, .math-display { font-family: "Cambria Math", var(--font-mono); }
+.math-display { display: block; text-align: center; margin: 1em 0; }
+
+.pad-error {
+    margin: 24px auto;
+    max-width: 760px;
+    padding: 18px 22px;
+    border: 1px solid var(--tok-keyword);
+    border-left-width: 4px;
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+.pad-error h2 { margin: 0 0 10px 0; font-size: 1.05em; color: var(--tok-keyword); }
+.pad-error pre {
+    margin: 0 0 12px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 12.5px;
+}
+.pad-error p { margin: 0; color: var(--fg-muted); font-size: 0.92em; }
+
+/* Copyable failure text shown above the (unchanged) document. */
+#status {
+    margin: 0 auto 18px auto;
+    max-width: var(--content-width);
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--tok-keyword);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--fg-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    user-select: text;
+}
+#status[hidden] { display: none; }
+
+.tok-keyword { color: var(--tok-keyword); }
+.tok-string { color: var(--tok-string); }
+.tok-comment { color: var(--tok-comment); font-style: italic; }
+.tok-number { color: var(--tok-number); }
+.tok-type { color: var(--tok-type); }
+
+::selection { background: var(--sel); }
+
+@media print {
+    body { overflow: visible; }
+    #page { max-width: none; padding: 0; }
+}
