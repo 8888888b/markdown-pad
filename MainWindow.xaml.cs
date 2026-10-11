@@ -453,6 +453,7 @@ public sealed partial class MainWindow : Window
                 case "ready":
                     _previewReady = true;
                     PreviewStatusText.Text = string.Empty;
+                    Diag.Log("preview shell ready");
                     UpdatePreview(keepScroll: false);
                     break;
 
@@ -568,6 +569,7 @@ public sealed partial class MainWindow : Window
     {
         var message = HtmlBuilder.Message(html, _previewTheme, keepScroll, _previewErrorDetail);
         Preview.CoreWebView2?.PostWebMessageAsJson(message);
+        Diag.Log($"preview updated: {html.Length} chars, keepScroll={keepScroll}");
 
         if (_previewStatusKey is null)
         {

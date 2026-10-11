@@ -69,14 +69,80 @@ dotnet publish src\MarkdownPad\MarkdownPad.csproj -c Release -p:Platform=x64 `
 
 用 Visual Studio 打开 `MarkdownPad.sln` 亦可（配置选 `x64`）。
 
+## 打包 MSIX 与签名
+
+一条命令完成：生成证书 → 构建 MSIX → 签名 → 验证 → （可选）信任证书并安装。
+
+```powershell
+# 只构建并签名
+powershell -ExecutionPolicy Bypass -File .\tools\build-msix.ps1
+
+# 构建 + 签名 + 机器级信任证书 + 安装（需要管理员）
+powershell -ExecutionPolicy Bypass -File .\tools\build-msix.ps1 -Version 1.0.4.0 -TrustCertificate -Install
+
+# 用正式证书出包（分发给别人时）
+powershell -ExecutionPolicy Bypass -File .\tools\build-msix.ps1 `
+  -CertificateSubject 'CN=Contoso Ltd' -PfxPath C:\certs\contoso.pfx -PfxPassword '***'
+```
+
+产物：
+
+```
+artifacts/msix/MarkdownPad_<版本>_x64_Test/
+├── MarkdownPad_<版本>_x64.msix     已签名，约 51 MB（含自包含 Windows App SDK）
+├── Install.ps1 / Add-AppDevPackage.ps1   微软生成的安装脚本
+artifacts/certs/
+├── MarkdownPad.Dev.pfx   开发用自签名证书（含私钥，已在 .gitignore 中排除）
+└── MarkdownPad.Dev.cer   公钥证书，分发给测试机用
+```
+
+### 直接在命令行打包（不用脚本）
+
+```powershell
+dotnet build src\MarkdownPad\MarkdownPad.csproj -c Release -p:Platform=x64 `
+  -p:PackageMsix=true `
+  -p:AppxPackageVersion=1.0.4.0 `
+  "-p:AppxPackagePublisher=`"CN=MarkdownPad Development`""
+```
+
+`Package.appxmanifest` 里的 `__VERSION__` / `__PUBLISHER__` 由构建期生成替换
+（`obj\Package.generated.appxmanifest`），所以版本号和签名主体都不用改文件。
+
+### 关于签名
+
+- 默认用的是**自签名开发证书** `CN=MarkdownPad Development`，3 年有效期，只适合本机/内网测试。
+  要分发给外部用户，必须换成受信任 CA 的代码签名证书（否则别人装不上）。
+- **清单里的 Publisher 必须和证书主体完全一致**，否则 `signtool` 直接拒绝签名。脚本会自动把
+  `-CertificateSubject` 同时写进清单，保持两者一致。
+- 签名用 SHA-256 + RFC3161 时间戳（`http://timestamp.digicert.com`）。有时间戳意味着
+  **证书过期后旧包依然有效**；脚本在时间戳服务器不可达时会自动降级为不加时间戳并给出警告。
+- 另一台机器要安装这个包，需要先把 `.cer` 装进"受信任的根证书颁发机构"和"受信任的人"：
+
+  ```powershell
+  # 目标机（管理员）
+  certutil -addstore Root .\artifacts\certs\MarkdownPad.Dev.cer
+  certutil -addstore TrustedPeople .\artifacts\certs\MarkdownPad.Dev.cer
+  Add-AppxPackage .\artifacts\msix\MarkdownPad_1.0.3.0_x64_Test\MarkdownPad_1.0.3.0_x64.msix
+  ```
+
+  双击 `.msix` 安装则需要在弹出的对话框里点"信任"。
+
+### 包内容
+
+- 自包含 Windows App SDK：目标机**不需要**预装 Windows App Runtime，代价是包体约 51 MB
+- 完整信任（`runFullTrust`）+ `windows.fileTypeAssociation`：`.md/.markdown/.mdown/.txt` 可关联，
+  双击即用 `MarkdownPad.exe <文件>` 打开（命令行参数已在应用内处理）
+- 图标资源由 `tools/generate-assets.py` 用 Pillow 生成（44/71/150/310 方块、310×150 宽版、
+  50 商店图标、620×300 启动画面），改配色或图形后重新跑一次即可
+- 升级安装用 `Add-AppxPackage -ForceUpdateFromAnyVersion`，或直接把包版本号提高
+
 ## 项目结构
 
 ```
 src/MarkdownPad/
 ├── App.xaml(.cs)                 应用入口与全局异常诊断
 ├── MainWindow.xaml(.cs)          UI 布局、WebView2 预览、文件与命令处理
-├── Controls/SplitterHandle.cs    可拖拽分栏（暴露受保护的鼠标指针属性）
-├── Helpers/
+├── Controls/SplitterHandle.cs    可拖拽分栏（暴露受保护的鼠标指针属性）├── Helpers/
 │   ├── MarkdownEditor.cs         纯函数式 Markdown 文本变换（加粗/标题/列表…）
 │   └── TextStats.cs              中英文混排的字数与阅读时间统计
 ├── Services/
@@ -187,12 +253,3 @@ MarkdownPad.exe --diag           # 打开诊断日志
   2 秒计时器单独负责。
 - **失败可见**：渲染异常写入 `preview.renderFailed` + 异常摘要，既进状态栏也进预览消息的 `status` 字段，
   由预览页顶部的 `#status` 元素展示（可复制）。
-  ## Star History
-
-<a href="https://www.star-history.com/?repos=8888888b%2Fmarkdown-pad&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=8888888b/markdown-pad&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=8888888b/markdown-pad&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=8888888b/markdown-pad&type=date&legend=top-left" />
- </picture>
-</a>

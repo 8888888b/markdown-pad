@@ -10,8 +10,6 @@
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <UseWinUI>true</UseWinUI>
-    <WindowsPackageType>None</WindowsPackageType>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -19,6 +17,78 @@
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
+
+  <!--
+    Two build flavours:
+      * default            -> unpackaged, self-contained, produces MarkdownPad.exe (easy F5 / xcopy)
+      * -p:PackageMsix=true -> MSIX package (needs an AppxManifest + signing), see README
+  -->
+  <PropertyGroup Condition="'$(PackageMsix)' != 'true'">
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PackageMsix)' == 'true'">
+    <!-- Self-contained inside the package: no Windows App Runtime prerequisite. -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <AppxPackage>true</AppxPackage>
+    <AppxManifest>Package.appxmanifest</AppxManifest>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <AppxPackageDir>$(MSBuildThisFileDirectory)..\..\artifacts\msix\</AppxPackageDir>
+    <AppxAutoIncrementPackageRevision>false</AppxAutoIncrementPackageRevision>
+    <GenerateAppxPackageOnBuild>true</GenerateAppxPackageOnBuild>
+    <AppxPackageVersion Condition="'$(AppxPackageVersion)' == ''">1.0.0.0</AppxPackageVersion>
+    <!-- No PDB symbol package: mspdbcmf.exe is not part of the NuGet BuildTools. -->
+    <AppxGenerateSymbolPackage>false</AppxGenerateSymbolPackage>
+    <AppxPackageIncludePrivateSymbols>false</AppxPackageIncludePrivateSymbols>
+    <!-- No .pdb in the package: mspdbcmf.exe (VS-only) is required to turn them
+         into a symbol package, and the NuGet BuildTools do not ship it. -->
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <!--
+    The manifest keeps tokens for identity/version so the package version and
+    signing subject stay overridable from the command line:
+      dotnet build -p:PackageMsix=true -p:AppxPackageVersion=1.2.0.0 -p:AppxPackagePublisher="CN=Contoso Ltd"
+  -->
+  <PropertyGroup Condition="'$(PackageMsix)' == 'true'">
+    <AppxPackageVersion Condition="'$(AppxPackageVersion)' == ''">1.0.0.0</AppxPackageVersion>
+    <AppxPackagePublisher Condition="'$(AppxPackagePublisher)' == ''">CN=MarkdownPad Development</AppxPackagePublisher>
+    <!--
+      The packaging targets consume the manifest as an *item*, so the generated
+      file (written by GenerateAppxManifest below) is declared here instead of
+      pointing AppxManifest at Package.appxmanifest.
+    -->
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GeneratedAppxManifest>$(MSBuildProjectDirectory)\obj\Package.generated.appxmanifest</GeneratedAppxManifest>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(PackageMsix)' == 'true'">
+    <AppxManifest Include="$(GeneratedAppxManifest)" />
+  </ItemGroup>
+
+  <Target Name="GenerateAppxManifest"
+          Condition="'$(PackageMsix)' == 'true'"
+          BeforeTargets="_ValidatePresenceOfAppxManifestItems;_GenerateAppxManifest">
+    <ItemGroup>
+      <_AppxManifestLines Include="$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\Package.appxmanifest'))" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_AppxManifestText>@(_AppxManifestLines)</_AppxManifestText>
+      <_AppxManifestText>$(_AppxManifestText.Replace('__VERSION__', '$(AppxPackageVersion)'))</_AppxManifestText>
+      <_AppxManifestText>$(_AppxManifestText.Replace('__PUBLISHER__', '$(AppxPackagePublisher)'))</_AppxManifestText>
+    </PropertyGroup>
+    <WriteLinesToFile
+      File="$(GeneratedAppxManifest)"
+      Lines="$(_AppxManifestText)"
+      Overwrite="true" />
+    <Error Condition="!Exists('$(GeneratedAppxManifest)')" Text="Failed to generate $(GeneratedAppxManifest)" />
+    <Error Condition="$(_AppxManifestText.Contains('__'))" Text="AppxManifest still contains unreplaced tokens; check AppxPackageVersion/AppxPackagePublisher." />
+    <Message Importance="high" Text="AppxManifest generated: version $(AppxPackageVersion), publisher $(AppxPackagePublisher)" />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
@@ -33,6 +103,17 @@
     <Content Include="Assets\Welcome.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <!-- Assets referenced by Package.appxmanifest; packaged only when building MSIX. -->
+  <ItemGroup Condition="'$(PackageMsix)' == 'true'">
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\Square44x44Logo.png" />
+    <Content Include="Assets\Square71x71Logo.png" />
+    <Content Include="Assets\Square150x150Logo.png" />
+    <Content Include="Assets\Square310x310Logo.png" />
+    <Content Include="Assets\Wide310x150Logo.png" />
+    <Content Include="Assets\SplashScreen.png" />
   </ItemGroup>
 
 </Project>
